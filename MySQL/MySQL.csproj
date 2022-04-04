@@ -1,7 +1,34 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="bin\Debug\netcoreapp2.1\MySQL.deps.json" />
+    <Content Include="bin\Release\netcoreapp2.1\MySQL.deps.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="bin\Debug\netcoreapp2.1\MySQL.dll" />
+    <None Include="bin\Debug\netcoreapp2.1\MySQL.pdb" />
+    <None Include="bin\Debug\netcoreapp2.1\StringUtils.dll" />
+    <None Include="bin\Debug\netcoreapp2.1\StringUtils.pdb" />
+    <None Include="bin\Release\netcoreapp2.1\MySQL.dll" />
+    <None Include="bin\Release\netcoreapp2.1\MySQL.pdb" />
+    <None Include="bin\Release\netcoreapp2.1\StringUtils.dll" />
+    <None Include="bin\Release\netcoreapp2.1\StringUtils.pdb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="8.0.28" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="StringUtils">
+      <HintPath>..\..\StringUtils\StringUtils\bin\Release\netcoreapp2.1\StringUtils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
 </Project>
