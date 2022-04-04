@@ -53,8 +53,8 @@ namespace Spec
             }
 
 
-            Edital ed = MySQL.Json.Select.Fill("SELECT edital_id, titulo, descricao, data_cadastro FROM editais WHERE edital_id=?edital_id LIMIT 1", new string[] { "2" }).Cache("editais1", "daily", true, MySQL.DbConnection.CacheConnString).Single<Edital>();
-            Console.WriteLine($"{ed.edital_id} {ed.titulo} {ed.data_cadastro}");
+            Edital ed1 = MySQL.Json.Select.Fill("SELECT edital_id, titulo, descricao, data_cadastro FROM editais WHERE edital_id=?edital_id LIMIT 1", new string[] { "2" }).Cache("editais1", "daily", true, MySQL.DbConnection.CacheConnString).Single<Edital>();
+            Console.WriteLine($"{ed1.edital_id} {ed1.titulo} {ed1.data_cadastro}");
 
             Console.ReadKey();
         }
