@@ -170,11 +170,30 @@ namespace MySQL
                 int p = _query.IndexOf("?");
                 while (p > -1)
                 {
-                    int p1 = _query.IndexOf(",", p);
+                    /*int p1 = _query.IndexOf(",", p);
                     int p2 = _query.IndexOf(" ", p);
                     int p3 = _query.IndexOf(")", p);
                     int p4 = _query.IndexOf(";", p);
                     int pf = MySQL.Json.Utils.Functions.MinorPositive(new int[] { p1, p2, p3, p4 });
+
+                    if (pf == -1)
+                    {
+                        arr.Add(_query.Substring(p));
+                    }
+                    else
+                    {
+                        arr.Add(_query.Substring(p, pf - p));
+                    }
+
+                    p = _query.IndexOf("?", p + 1); */
+
+                    int p1 = _query.IndexOf(",", p);
+                    int p2 = _query.IndexOf(" ", p);
+                    int p3 = _query.IndexOf(")", p);
+                    int p4 = _query.IndexOf(";", p);
+                    int p5 = _query.IndexOf("+", p);
+                    int p6 = _query.IndexOf("-", p);
+                    int pf = MySQL.Json.Utils.Functions.MinorPositive(new int[] { p1, p2, p3, p4, p5, p6 });
 
                     if (pf == -1)
                     {
@@ -284,7 +303,7 @@ namespace MySQL
             int p = _query.IndexOf("?");
             while (p > -1)
             {
-                int p1 = _query.IndexOf(",", p);
+                /*int p1 = _query.IndexOf(",", p);
                 int p2 = _query.IndexOf(" ", p);
                 int p3 = _query.IndexOf(")", p);
                 int p4 = _query.IndexOf(";", p);
@@ -298,6 +317,25 @@ namespace MySQL
                 {
                     list.Add(new MySQLParameter(_query.Substring(p, pf - p), ""));
                 }
+                p = _query.IndexOf("?", p + 1);*/
+
+                int p1 = _query.IndexOf(",", p);
+                int p2 = _query.IndexOf(" ", p);
+                int p3 = _query.IndexOf(")", p);
+                int p4 = _query.IndexOf(";", p);
+                int p5 = _query.IndexOf("+", p);
+                int p6 = _query.IndexOf("-", p);
+                int pf = MySQL.Json.Utils.Functions.MinorPositive(new int[] { p1, p2, p3, p4, p5, p6 });
+
+                if (pf == -1)
+                {
+                    list.Add(new MySQLParameter(_query.Substring(p), ""));
+                }
+                else
+                {
+                    list.Add(new MySQLParameter(_query.Substring(p, pf - p), ""));
+                }
+
                 p = _query.IndexOf("?", p + 1);
             }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,18 @@ namespace MySQL.Json.Utils
             }
 
             return p;
+        }
+
+        public static T JsonToObject<T>(string json)
+        {
+            T deserialized = JsonConvert.DeserializeObject<T>(json);
+            return deserialized;
+        }
+
+
+        public static string ObjectToJson<T>(T obj)
+        {
+            return JsonConvert.SerializeObject(obj);
         }
     }
 }

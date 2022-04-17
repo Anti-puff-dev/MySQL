@@ -193,11 +193,11 @@ namespace MySQL.Json
                 {
                     try
                     {
-                        MySQL.Data.Query((sqlvars.Count() > 0 ? Utils.Serialize.SqlVars(sqlvars) : "") + "DELETE FROM " + _mytable + " WHERE " + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
+                        MySQL.Data.Query((sqlvars.Count() > 0 ? Utils.Serialize.SqlVars(sqlvars) : "") + "SET FOREIGN_KEY_CHECKS = 0;DELETE FROM " + _mytable + " WHERE " + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
                     }
                     catch (Exception err)
                     {
-                        MySQL.Data.Query("DELETE FROM " + _mytable + " WHERE " + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
+                        MySQL.Data.Query("SET FOREIGN_KEY_CHECKS = 0;DELETE FROM " + _mytable + " WHERE " + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
                     }
                 }
             }
@@ -224,11 +224,11 @@ namespace MySQL.Json
 
                 try
                 {
-                    MySQL.Data.Query((sqlvars.Count() > 0 ? Utils.Serialize.SqlVars(sqlvars) : "") + "DELETE FROM " + table + " " + q, parms);
+                    MySQL.Data.Query((sqlvars.Count() > 0 ? Utils.Serialize.SqlVars(sqlvars) : "") + "SET FOREIGN_KEY_CHECKS = 0;DELETE FROM " + table + " " + q, parms);
                 }
                 catch (Exception err)
                 {
-                    MySQL.Data.Query("DELETE FROM " + table + " " + q, parms);
+                    MySQL.Data.Query("SET FOREIGN_KEY_CHECKS = 0;DELETE FROM " + table + " " + q, parms);
 
                 }
             }
@@ -237,11 +237,11 @@ namespace MySQL.Json
 
                 try
                 {
-                    MySQL.Data.Query((sqlvars.Count() > 0 ? Utils.Serialize.SqlVars(sqlvars) : "") + "DELETE FROM " + table + " WHERE " + table + "." + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
+                    MySQL.Data.Query((sqlvars.Count() > 0 ? Utils.Serialize.SqlVars(sqlvars) : "") + "SET FOREIGN_KEY_CHECKS = 0;DELETE FROM " + table + " WHERE " + table + "." + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
                 }
                 catch (Exception err)
                 {
-                    MySQL.Data.Query("DELETE FROM " + table + " WHERE " + table + "." + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
+                    MySQL.Data.Query("SET FOREIGN_KEY_CHECKS = 0;DELETE FROM " + table + " WHERE " + table + "." + (fieldsLower ? field.ToLower() : field) + "=?value", parms);
                 }
 
 
