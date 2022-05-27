@@ -7,7 +7,9 @@ using MySql.Data.MySqlClient;
 using System.Diagnostics;
 using System.Collections;
 using System.Threading;
-
+using Newtonsoft.Json;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace MySQL
 {
@@ -82,7 +84,7 @@ namespace MySQL
     public class Data
     {
         public static bool resync = false;
-
+       
 
         public static DataSet Query(string _query, List<MySQLParameter> list)
         {
@@ -114,6 +116,7 @@ namespace MySQL
                 }
 
                 DataSet myDataSet = new DataSet();
+
                 if (resync)
                 {
                     try
@@ -139,6 +142,7 @@ namespace MySQL
                     myConnection.Dispose();
                 }
                 return myDataSet;
+               
             }
         }
 
@@ -220,10 +224,28 @@ namespace MySQL
                     }
                 }
 
-                DataSet myDataSet = new DataSet();
-                if (resync)
-                {
-                    try
+                
+
+                if (String.IsNullOrEmpty(DbConnection.DbQueueServer))
+                { 
+                    DataSet myDataSet = new DataSet();
+                    if (resync)
+                    {
+                        try
+                        {
+                            MySqlDataAdapter myDataAdapter = new MySqlDataAdapter(cmd);
+                            myDataAdapter.Fill(myDataSet);
+                            myDataAdapter.Dispose();
+                            myConnection.Close();
+                            myConnection.Dispose();
+                        }
+                        catch (Exception err)
+                        {
+                            Thread.Sleep(20);
+                            return Query(_query, list, page, results);
+                        }
+                    }
+                    else
                     {
                         MySqlDataAdapter myDataAdapter = new MySqlDataAdapter(cmd);
                         myDataAdapter.Fill(myDataSet);
@@ -231,22 +253,12 @@ namespace MySQL
                         myConnection.Close();
                         myConnection.Dispose();
                     }
-                    catch (Exception err)
-                    {
-                        Thread.Sleep(20);
-                        return Query(_query, list, page, results);
-                    }
-                }
-                else
-                {
-                    MySqlDataAdapter myDataAdapter = new MySqlDataAdapter(cmd);
-                    myDataAdapter.Fill(myDataSet);
-                    myDataAdapter.Dispose();
-                    myConnection.Close();
-                    myConnection.Dispose();
-                }
 
-                return myDataSet;
+                    return myDataSet;
+                } else
+                {
+                    return LazyQuery(_query, list);
+                }
             }
         }
 
@@ -266,10 +278,26 @@ namespace MySQL
 
             using (MySqlConnection myConnection = new MySqlConnection(DbConnection.ConnString))
             {
-                DataSet myDataSet = new DataSet();
-                if (resync)
+                if (String.IsNullOrEmpty(DbConnection.DbQueueServer))
                 {
-                    try
+                    DataSet myDataSet = new DataSet();
+                    if (resync)
+                    {
+                        try
+                        {
+                            MySqlDataAdapter myDataAdapter = new MySqlDataAdapter(_query, myConnection);
+                            myDataAdapter.Fill(myDataSet);
+                            myDataAdapter.Dispose();
+                            myConnection.Close();
+                            myConnection.Dispose();
+                        }
+                        catch (Exception err)
+                        {
+                            Thread.Sleep(20);
+                            return Query(_query, page, results);
+                        }
+                    }
+                    else
                     {
                         MySqlDataAdapter myDataAdapter = new MySqlDataAdapter(_query, myConnection);
                         myDataAdapter.Fill(myDataSet);
@@ -277,21 +305,11 @@ namespace MySQL
                         myConnection.Close();
                         myConnection.Dispose();
                     }
-                    catch (Exception err)
-                    {
-                        Thread.Sleep(20);
-                        return Query(_query, page, results);
-                    }
-                }
-                else
+                    return myDataSet;
+                } else
                 {
-                    MySqlDataAdapter myDataAdapter = new MySqlDataAdapter(_query, myConnection);
-                    myDataAdapter.Fill(myDataSet);
-                    myDataAdapter.Dispose();
-                    myConnection.Close();
-                    myConnection.Dispose();
+                    return LazyQuery(_query, new string[] { });
                 }
-                return myDataSet;
             }
         }
 
@@ -461,6 +479,94 @@ namespace MySQL
         public static void Config(string _connString)
         {
             DbConnection.ConnString = _connString;
+        }
+
+
+
+        static HubConnection connection = null;
+
+
+        static DataSet LazyQuery(string query, string[] parms)
+        {
+            DataSet _ds = null;
+            //Console.WriteLine("LazyQuery " + query);
+            LQuery(query, parms, DbConnection.DbQueueServer, Guid.NewGuid().ToString(), ((DataSet ds) =>
+            {
+                _ds = ds;
+                return true;
+            }));
+
+            while (_ds == null) {
+                //Console.WriteLine("wainting...");
+                Task.Delay(10);
+            }
+
+            return _ds;
+        }
+
+        static void LQuery(string query, string[] parms, string dbQueueServer, string hash, Func<DataSet, bool> func)
+        {
+            DbConnection.DbMemoryHash.Add(hash, func);
+
+            if (connection == null)
+            {
+                //Console.WriteLine("Connection Initlized " + dbQueueServer);
+                connection = new HubConnectionBuilder().WithUrl(dbQueueServer).Build();
+               
+
+                connection.Closed += async (error) =>
+                {
+                    await Task.Delay(1);
+                };
+
+                connection.On<string, string>("Refused", (descrition, message) =>
+                {
+                    //Console.WriteLine($"Refuse: {descrition} / {message}");
+                });
+
+                connection.On<string, string>("Accepted", (descrition, message) =>
+                {
+                    //Console.WriteLine($"Accepted: {descrition} / {message}");
+                });
+
+                connection.On<string, string>("Disconected", (descrition, message) =>
+                {
+                    //Console.WriteLine($"Disconected: {descrition} / {message}");
+                });
+
+                connection.On<string, string>("QuerySuccess", (_hash, result) =>
+                {
+                    DataSet ds = JsonConvert.DeserializeObject<DataSet>(result);
+                    //Console.WriteLine($"QuerySuccess: {_hash} / {ds.Tables[0].Rows[0][0].ToString()}");
+                    DbConnection.DbMemoryHash[_hash](ds);
+                    DbConnection.DbMemoryHash.Remove(_hash);
+                });
+
+                connection.On<string, string>("QueryError", (descrition, message) =>
+                {
+                    //Console.WriteLine($"QueryError: {descrition} / {message}");
+                });
+            }
+
+
+            try
+            {
+                connection.StartAsync().ContinueWith(t => {
+                    if (t.IsFaulted)
+                        Console.WriteLine(t.Exception.GetBaseException());
+                    /*else
+                        Console.WriteLine("Connected to Hub");*/
+
+                }).Wait();
+                connection.InvokeAsync("Connect", Guid.NewGuid());
+            }
+            catch (Exception err) {
+
+            }
+
+            //Console.WriteLine(DbConnection.DbMemoryHash.Count);
+            //Console.WriteLine("Enqueue " + hash + " " + query);
+            connection.InvokeAsync("Enqueue", hash, query, parms, 0);
         }
     }
 }
